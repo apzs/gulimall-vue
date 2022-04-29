@@ -61,7 +61,7 @@ export default {
       // 添加菜单的对话框
       dialogVisible: false,
       // 添加菜单对话框中的数据
-      category: { name: "" },
+      category: { name: "", parentCid: 0, catLevel: 0, showStatus: 1, sort: 0 },
       //默认展开的节点的 key 的数组
       expandedKey: [],
       defaultProps: {
@@ -72,7 +72,7 @@ export default {
   },
   methods: {
     handleNodeClick(data) {
-      console.log(data);
+      // console.log(data);
     },
     getMenus() {
       this.$http({
@@ -93,6 +93,11 @@ export default {
       console.log("append方法中的data参数：");
       console.log(data);
       this.dialogVisible = true;
+      //<点击append按钮的节点>为<要添加的节点>的父节点
+      this.category.parentCid = data.catId;
+      //<要添加的节点>的父节点的层级为<点击append按钮的节点>+1
+      //data.catLevel*1 可以将 String类型的 data.catLevel 转为 int 类型
+      this.category.catLevel = data.catLevel * 1 + 1;
     },
     //向后端发送删除请求
     remove(node, data) {
@@ -109,11 +114,12 @@ export default {
             data: this.$http.adornData(ids, false),
           }).then(({ datas }) => {
             this.$message({
-              type: "【${data.name}】success",
-              message: `删除成功`,
+              type: "success",
+              message: `【${data.name}】删除成功`,
             });
             //重新发送请求,更新数据
             this.getMenus();
+            //默认展开的菜单节点
             this.expandedKey = [node.parent.data.catId];
             //或者写成this.expandedKey=[data.parentCid]
           });
@@ -131,11 +137,26 @@ export default {
       console.log(data);
     },
     //向后端发送添加请求
-    addCatagory(){
+    addCatagory() {
       this.dialogVisible = false;
-      console.log("catagory:");
+      console.log("catagory中的数据:");
       console.log(this.category);
-    }
+
+      this.$http({
+        url: this.$http.adornUrl("/product/category/save"),
+        method: "post",
+        data: this.$http.adornData(this.category, false),
+      }).then(({ data }) => {
+        this.$message({
+          type: "success",
+          message: `添加成功`,
+        });
+        //重新获取数据
+        this.getMenus();
+        //默认展开的菜单节点
+        this.expandedKey = [this.category.parentCid];
+      });
+    },
   },
   //计算属性 类似于 data 概念
   computed: {},
